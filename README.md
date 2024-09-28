@@ -1,6 +1,10 @@
 ## researcher
 
-Do some research
+Do some research via [gpt-researcher](https://github.com/assafelovic/gpt-researcher)
+
+### prereqs
+
+By default, expects an [OpenAI API key](https://platform.openai.com) in the `OPENAI_API_KEY` environment variable and a [Tavily API key](https://app.tavily.com/) in `TAVILY_API_KEY`. 
 
 ### irc bot
 
