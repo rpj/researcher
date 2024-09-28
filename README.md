@@ -8,14 +8,15 @@ By default, expects an [OpenAI API key](https://platform.openai.com) in the `OPE
 
 Also expects an [R2 bucket](https://developers.cloudflare.com/r2/) set up and keys as `AWS_*` environment variables.
 
-### irc bot
-
 ```
 $ git clone https://github.com/rpj/researcher.git
 $ cd researcher
-$ python -m venv .venv
-$ source .venv/bin/activate
-$ pip install -r requirements.txt
+$ python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
+```
+
+### irc bot
+
+```
 $ python bot.py --nickname ... --server ... --channel ...
 ```
 

@@ -36,7 +36,6 @@ async def reports_for_query(
     r2config: R2Config,
     reportTypes: List[str] = ["research"],
     outPath: str = ".",
-    appendSupplementary: bool = False,
 ):
     wrote_files = []
     for rep_type in reportTypes:
@@ -50,24 +49,26 @@ async def reports_for_query(
             .replace(".", "")
         )
         fname = f"{outPath}/{name}-{rep_type}_{ts}.md"
+        fpath = Path(fname).resolve()
+        costs = researcher.get_costs()
+
         with open(fname, "w") as f:
             f.write(report)
-            costs = researcher.get_costs()
-            if appendSupplementary:
-                f.write("\n\n---\n\n")
-                f.write(f"Costs: {costs}")
-                f.write("\n\n---\n\n")
-                f.write("Full context:\n")
-                for context in researcher.get_research_context():
-                    f.write(context)
-        fpath = Path(fname).resolve()
+
+        supl_fname = fpath.with_suffix(".supplementary.txt")
+        with open(supl_fname, "w") as f:
+            for context in researcher.get_research_context():
+                f.write(context)
+        supl_url = upload_report(supl_fname, r2config)
+
         r2_url = upload_report(fpath, r2config)
         html_report = markdown2.markdown(report)
         html_path = fpath.with_suffix(".html")
         with open(html_path, "w") as hf:
             hf.write(html_report)
         html_r2 = upload_report(html_path, r2config)
-        wrote_files.append((fpath, costs, r2_url, html_r2))
+
+        wrote_files.append((fpath, costs, r2_url, html_r2, supl_url))
     return wrote_files
 
 
