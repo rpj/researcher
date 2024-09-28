@@ -47,7 +47,7 @@ async def message_received(msg, user, channel):
         if comps[0].startswith("research!") and len(comps) > 3:
             query = " ".join(comps[1:])
             bot.send_message(
-                f'## Generating report for user {user} with query "{query}"...'
+                f'### Generating report for user {user} with query "{query}"...'
             )
             [(repPath, repCost, r2Url, html_r2)] = await reports_for_query(
                 name=str(uuid.uuid4()),
@@ -56,7 +56,7 @@ async def message_received(msg, user, channel):
                 outPath=OUT_PATH,
                 appendSupplementary=False,
             )
-            bot.send_message(f"## Report complete! Cost: {repCost}")
+            bot.send_message(f"### Report complete! Cost: {repCost}")
             if args.reportInChannel or comps[0].endswith("!loud"):
                 with open(repPath, "r") as f:
                     for line in f:
@@ -71,7 +71,7 @@ async def message_received(msg, user, channel):
                             await asyncio.sleep(1)
                             print(f"[{len(sl)}]>> {sl}")
                             bot.send_message(sl)
-            bot.send_message(f"## _ Report available at: {r2Url} or {html_r2} _")
+            bot.send_message(f"### _Report available at: {r2Url} or {html_r2} _")
     except Exception as e:
         bot.send_message(f"BOT ERROR: {e}")
 
