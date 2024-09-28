@@ -44,20 +44,31 @@ async def message_received(msg, user, channel):
     try:
         if not len(msg) or not len(user):
             return
-        comps = msg.split(" ")
-        if comps[0].startswith("research!") and len(comps) > 3:
-            query = " ".join(comps[1:])
+
+        [trigger, *queryComps] = msg.split(" ")
+
+        if trigger.startswith("research!") and len(queryComps) > 0:
+            query = " ".join(queryComps)
+            report_type = "research"
+            type_idx = trigger.find("!type")
+            if type_idx != -1:
+                [_t, report_type] = trigger[type_idx:].split("=")
+
             bot.send_message(
-                f'Generating report for user {user} with query "{query}"...'
+                f'Generating {report_type} report for user {user} with query "{query}"...'
             )
-            [(repPath, repCost, r2Url, html_r2, supl_url)] = await reports_for_query(
-                name=str(uuid.uuid4()),
-                query=query,
-                r2config=r2config,
-                outPath=OUT_PATH,
+            [(repPath, repCost, elapsed, r2Url, html_r2, supl_url, supl_html_url)] = (
+                await reports_for_query(
+                    name=str(uuid.uuid4()),
+                    query=query,
+                    r2config=r2config,
+                    outPath=OUT_PATH,
+                    reportTypes=[report_type],
+                )
             )
-            bot.send_message(f"Report complete! Cost: {repCost}")
-            if args.reportInChannel or comps[0].endswith("!loud"):
+
+            bot.send_message(f"Report complete in {elapsed} seconds (cost: {repCost})")
+            if args.reportInChannel or trigger.endswith("!loud"):
                 with open(repPath, "r") as f:
                     for line in f:
                         split_lines = [line]
@@ -71,8 +82,10 @@ async def message_received(msg, user, channel):
                             await asyncio.sleep(1)
                             print(f"[{len(sl)}]>> {sl}")
                             bot.send_message(sl)
-            bot.send_message(f"_Report available at {r2Url} or {html_r2} _")
-            bot.send_message(f"_Supplementary available at {supl_url} _")
+            bot.send_message(f"Report available at {r2Url} or {html_r2}")
+            bot.send_message(
+                f"Supplementary available at {supl_url} or {supl_html_url}"
+            )
     except Exception as e:
         bot.send_message(f"BOT ERROR: {e}")
 
