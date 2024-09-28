@@ -54,11 +54,7 @@ async def reports_for_query(
         fname = f"{outPath}/{name}-{rep_type}_{ts}.md"
         fpath = Path(fname).resolve()
         costs = researcher.get_costs()
-
-        preamble = f"# Query\n**{query}**\n\n## Processing time: {elapsed} seconds\n\n"
-        with open(fname, "w") as f:
-            f.write(preamble)
-            f.write(report)
+        preamble = f'# Query\n"**{query}**"\n\n## Processing time:\n**{elapsed}** seconds (cost: {costs})\n\n'
 
         supl_fname = fpath.with_suffix(".supplementary.txt")
         with open(supl_fname, "w") as f:
@@ -89,8 +85,17 @@ async def reports_for_query(
         supl_url = upload_report(supl_fname, r2config)
         supl_html_url = upload_report(supl_html_path, r2config)
 
+        supl_msg = (
+            f"## Supplementary: [markdown]({supl_url}), [html]({supl_html_url})\n\n"
+        )
+        with open(fname, "w") as f:
+            f.write(preamble)
+            f.write(report)
+            f.write("\n\n")
+            f.write(supl_msg)
+
         r2_url = upload_report(fpath, r2config)
-        html_report = markdown2.markdown(report)
+        html_report = markdown2.markdown(f"{report}\n\n---\n\n{preamble}{supl_msg}")
         html_path = fpath.with_suffix(".html")
         with open(html_path, "w") as hf:
             hf.write(html_report)

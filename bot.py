@@ -54,9 +54,9 @@ async def message_received(msg, user, channel):
             if type_idx != -1:
                 [_t, report_type] = trigger[type_idx:].split("=")
 
-            bot.send_message(
-                f'Generating {report_type} report for user {user} with query "{query}"...'
-            )
+            msg = f'Generating {report_type} report for user {user} with query "{query}"...'
+            bot.send_message(msg)
+            print(msg)
             [(repPath, repCost, elapsed, r2Url, html_r2, supl_url, supl_html_url)] = (
                 await reports_for_query(
                     name=str(uuid.uuid4()),
