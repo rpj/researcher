@@ -18,10 +18,22 @@ class R2Config:
     domain: str
 
 
+CONTENT_TYPES = {
+    ".html": "text/html",
+    ".md": "text/markdown",
+    ".txt": "text/plain",
+}
+
+
 def upload_report(reportPath: Path, config: R2Config):
     s3 = boto3.client(service_name="s3", endpoint_url=config.endpoint)
     name = f"{reportPath.stem}{reportPath.suffix}"
-    s3.upload_file(reportPath, config.bucket, name)
+    s3.upload_file(
+        reportPath,
+        config.bucket,
+        name,
+        ExtraArgs={"Metadata": {"ContentType": CONTENT_TYPES[reportPath.suffix]}},
+    )
     return f"{config.domain}/{name}"
 
 

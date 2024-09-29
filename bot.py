@@ -1,6 +1,9 @@
 import argparse
 import asyncio
+import json
+import time
 import uuid
+from collections import defaultdict
 from pathlib import Path
 
 import ircpy as irc
@@ -9,6 +12,10 @@ from lib.research import R2Config, reports_for_query
 
 OUT_PATH = Path("./bot.out").resolve()
 LINE_LENGTH_LIM = 400
+TRIGGER = "research!"
+RT_STATS = defaultdict(int)
+RT_STATS["reportTypes"] = defaultdict(int)
+STARTUP_TIME = time.time()
 
 parser = argparse.ArgumentParser(description="An IRC bot that can do some research")
 parser.add_argument("--nickname")
@@ -28,8 +35,14 @@ bot = irc.Bot(
     nickname=args.nickname,
     server=args.server,
     channel=args.channel,
-    prefix="er?",
+    prefix="er?",  # TODO: fix crappy handling of this in the lib...
 )
+
+
+async def _throttled_send(lines, sleep_time_secs=1):
+    for l in lines:
+        await asyncio.sleep(sleep_time_secs)
+        bot.send_message(l)
 
 
 @bot.event
@@ -47,7 +60,19 @@ async def message_received(msg, user, channel):
 
         [trigger, *queryComps] = msg.split(" ")
 
-        if trigger.startswith("research!") and len(queryComps) > 0:
+        if trigger.startswith(TRIGGER) and len(queryComps) == 0:
+            cmd = trigger[len(TRIGGER) :]
+            if cmd == "ping":
+                bot.send_message("Pong!")
+            if cmd == "stats":
+                await _throttled_send(
+                    json.dumps(
+                        {**RT_STATS, "uptime": time.time() - STARTUP_TIME}, indent=2
+                    ).split("\n")[1:-1]
+                )
+            return
+
+        if trigger.startswith(TRIGGER) and len(queryComps) > 0:
             query = " ".join(queryComps)
             report_type = "research"
             type_idx = trigger.find("!type")
@@ -66,6 +91,10 @@ async def message_received(msg, user, channel):
                     reportTypes=[report_type],
                 )
             )
+            RT_STATS["costs"] += repCost
+            RT_STATS["processingTime"] += elapsed
+            RT_STATS["queries"] += 1
+            RT_STATS["reportTypes"][report_type] += 1
 
             bot.send_message(f"Report complete in {elapsed} seconds (cost: {repCost})")
             if args.reportInChannel or trigger.endswith("!loud"):
@@ -78,10 +107,7 @@ async def message_received(msg, user, channel):
                                 split_lines.append(line[:LINE_LENGTH_LIM])
                                 line = line[LINE_LENGTH_LIM:]
                             split_lines.append(line)
-                        for sl in split_lines:
-                            await asyncio.sleep(1)
-                            print(f"[{len(sl)}]>> {sl}")
-                            bot.send_message(sl)
+                        await _throttled_send(split_lines)
             bot.send_message(f"Report available at {r2Url} or {html_r2}")
             bot.send_message(
                 f"Supplementary available at {supl_url} or {supl_html_url}"
