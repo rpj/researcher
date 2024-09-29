@@ -32,7 +32,7 @@ def upload_report(reportPath: Path, config: R2Config):
         reportPath,
         config.bucket,
         name,
-        ExtraArgs={"Metadata": {"ContentType": CONTENT_TYPES[reportPath.suffix]}},
+        ExtraArgs={"ContentType": CONTENT_TYPES[reportPath.suffix]},
     )
     return f"{config.domain}/{name}"
 

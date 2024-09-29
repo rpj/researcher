@@ -82,14 +82,14 @@ async def message_received(msg, user, channel):
             msg = f'Generating {report_type} report for user {user} with query "{query}"...'
             bot.send_message(msg)
             print(msg)
-            [(repPath, repCost, elapsed, r2Url, html_r2, supl_url, supl_html_url)] = (
-                await reports_for_query(
-                    name=str(uuid.uuid4()),
-                    query=query,
-                    r2config=r2config,
-                    outPath=OUT_PATH,
-                    reportTypes=[report_type],
-                )
+            [
+                (repPath, repCost, elapsed, r2Url, html_r2, supl_url, supl_html_url)
+            ] = await reports_for_query(
+                name=str(uuid.uuid4()),
+                query=query,
+                r2config=r2config,
+                outPath=OUT_PATH,
+                reportTypes=[report_type],
             )
             RT_STATS["costs"] += repCost
             RT_STATS["processingTime"] += elapsed
