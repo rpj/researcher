@@ -82,22 +82,27 @@ async def message_received(msg, user, channel):
             msg = f'Generating {report_type} report for user {user} with query "{query}"...'
             bot.send_message(msg)
             print(msg)
-            [
-                (repPath, repCost, elapsed, r2Url, html_r2, supl_url, supl_html_url)
-            ] = await reports_for_query(
-                name=str(uuid.uuid4()),
-                query=query,
-                r2config=r2config,
-                outPath=OUT_PATH,
-                reportTypes=[report_type],
+            [(repPath, repCost, elapsed, r2Url, html_r2, supl_url, supl_html_url)] = (
+                await reports_for_query(
+                    name=str(uuid.uuid4()),
+                    query=query,
+                    r2config=r2config,
+                    outPath=OUT_PATH,
+                    reportTypes=[report_type],
+                )
             )
             RT_STATS["costs"] += repCost
             RT_STATS["processingTime"] += elapsed
             RT_STATS["queries"] += 1
             RT_STATS["reportTypes"][report_type] += 1
 
-            bot.send_message(f"Report complete in {elapsed} seconds (cost: {repCost})")
-            if args.reportInChannel or trigger.endswith("!loud"):
+            bot.send_message(
+                f'Report for {user}\'s query "{query}" (~{round(elapsed)}s): {html_r2}'
+            )
+
+            loud = trigger.endswith("!loud")
+
+            if args.reportInChannel:
                 with open(repPath, "r") as f:
                     for line in f:
                         split_lines = [line]
@@ -108,10 +113,11 @@ async def message_received(msg, user, channel):
                                 line = line[LINE_LENGTH_LIM:]
                             split_lines.append(line)
                         await _throttled_send(split_lines)
-            bot.send_message(f"Report available at {r2Url} or {html_r2}")
-            bot.send_message(
-                f"Supplementary available at {supl_url} or {supl_html_url}"
-            )
+
+            if loud:
+                bot.send_message(
+                    f"Markdown available at {r2Url}; supplementary available at {supl_url} or {supl_html_url}; cost {repCost}"
+                )
     except Exception as e:
         bot.send_message(f"BOT ERROR: {e}")
 
